@@ -10,7 +10,7 @@ import json
 def init_service():
     # Streamlit secrets'ten oku ve geçici dosya olarak yaz
     with open("service-key.json", "w") as f:
-        f.write(st.secrets["gdrive_service_account"])
+        f.write(st.secrets["service_account"])
 
     # Ayar dosyasını da oluştur
     # with open("settings.yaml", "w") as f:
