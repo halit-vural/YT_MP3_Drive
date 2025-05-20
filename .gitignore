@@ -42,4 +42,4 @@ htmlcov/
 assets/
 data/
 downloaded_audio.*
-yt-mp3-drive-service-key.json
+*.json

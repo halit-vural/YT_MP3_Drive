@@ -3,7 +3,23 @@ from yt_dlp import YoutubeDL
 import os
 from pydrive2.auth import GoogleAuth
 from pydrive2.drive import GoogleDrive
-from pydrive2.settings import LoadSettingsFile
+# from pydrive2.settings import LoadSettingsFile
+
+import json
+
+def init_service():
+    # Streamlit secrets'ten oku ve geçici dosya olarak yaz
+    with open("service-key.json", "w") as f:
+        f.write(st.secrets["gdrive_service_account"])
+
+    # Ayar dosyasını da oluştur
+    # with open("settings.yaml", "w") as f:
+    #     f.write("""
+    #         client_config_backend: service
+    #         service_config:
+    #         client_json_file_path: service-key.json
+    #         """)
+
 
 # Google Drive yetkilendirme (service account ile)
 def gdrive_login():
@@ -33,6 +49,8 @@ def download_m4a(youtube_url):
         ydl.download([youtube_url])
     return 'downloaded_audio.m4a'
 
+
+init_service()
 # Streamlit arayüzü
 st.title("YouTube Audio Downloader 🎧")
 url = st.text_input("YouTube URL")
