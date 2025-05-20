@@ -68,10 +68,10 @@ def save_to_drive(audio_file, title):
     })
     file.SetContentFile(audio_file)
     file.Upload()
-    return drive_filename
+    return drive_filename.split(':')[0]
 
 
-init_service()
+# init_service()
 
 # Streamlit arayüzü
 st.title("YouTube Audio Downloader 🎧")
