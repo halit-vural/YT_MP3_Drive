@@ -68,6 +68,7 @@ def save_to_drive(audio_file, title):
     })
     file.SetContentFile(audio_file)
     file.Upload()
+    return drive_filename
 
 
 init_service()
@@ -85,5 +86,5 @@ if st.button("Download and Save to Drive"):
                     "{title}"  
                 """
         with st.spinner(message):
-            save_to_drive(audio_file, title)
-        st.success(f"All done! Check your Drive folder. file:{audio_file}")
+            file_name = save_to_drive(audio_file, title)
+        st.success(f"All done! Check your Drive folder. file:{file_name}")
