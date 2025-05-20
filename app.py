@@ -6,13 +6,15 @@ from pydrive2.drive import GoogleDrive
 # from pydrive2.settings import LoadSettingsFile
 
 import json
+import re
+
 
 def init_service():
     # Streamlit secrets'ten oku ve geçici dosya olarak yaz
     with open("service-key.json", "w") as f:
         f.write(st.secrets["service_account"])
     
-    st.write(st.secrets["service_account"])
+    # st.write(st.secrets["service_account"])
 
     # Ayar dosyasını da oluştur
     # with open("settings.yaml", "w") as f:
@@ -29,30 +31,47 @@ def gdrive_login():
     gauth.ServiceAuth()
     return GoogleDrive(gauth)
 
-# Drive'a yükleme
-def save_to_drive(audio_file):
-    folder_id = "1qAMA1St9zPeCfjpcs10ielVBwfjnOnFz" 
+# Özel karakterleri temizle
+def sanitize_filename(title):
+    # Sadece harf, rakam, boşluk, tire ve alt çizgi kalsın
+    sanitized = re.sub(r'[\\/*?:"<>|]', "", title)  # Windows için yasak karakterler
+    sanitized = re.sub(r'\s+', '_', sanitized).strip('_')  # Boşlukları alt çizgi yap
+    return sanitized
+
+# M4A indirici ve başlık döndürücü
+def download_m4a(youtube_url):
+    ydl_opts = {
+        'format': 'bestaudio[ext=m4a]/bestaudio',
+        'outtmpl': 'downloaded_audio.%(ext)s',
+        'postprocessors': [],
+        'quiet': True,
+    }
+
+    with YoutubeDL(ydl_opts) as ydl:
+        info = ydl.extract_info(youtube_url, download=True)
+        title = info.get("title", "downloaded_audio")
+    
+    filename = 'downloaded_audio.m4a'
+    return filename, title
+
+# Google Drive'a yükle (başlığı kullanarak)
+def save_to_drive(audio_file, title):
+    folder_id = "1qAMA1St9zPeCfjpcs10ielVBwfjnOnFz"
     drive = gdrive_login()
+
+    safe_title = sanitize_filename(title)
+    drive_filename = f"{safe_title}.m4a"
+
     file = drive.CreateFile({
-        'title': os.path.basename(audio_file),
+        'title': drive_filename,
         'parents': [{'id': folder_id}]
     })
     file.SetContentFile(audio_file)
     file.Upload()
 
-# M4A indirici (ffmpeg gerekmez)
-def download_m4a(youtube_url):
-    ydl_opts = {
-        'format': 'bestaudio[ext=m4a]/bestaudio',
-        'outtmpl': 'downloaded_audio.%(ext)s',
-        'postprocessors': [],  # no ffmpeg
-    }
-    with YoutubeDL(ydl_opts) as ydl:
-        ydl.download([youtube_url])
-    return 'downloaded_audio.m4a'
-
 
 init_service()
+
 # Streamlit arayüzü
 st.title("YouTube Audio Downloader 🎧")
 url = st.text_input("YouTube URL")
@@ -60,7 +79,11 @@ url = st.text_input("YouTube URL")
 if st.button("Download and Save to Drive"):
     if url:
         with st.spinner("Downloading audio..."):
-            audio_file = download_m4a(url)
-        with st.spinner("Uploading to Google Drive..."):
-            save_to_drive(audio_file)
-        st.success("All done! Check your Drive folder.")
+            audio_file, title = download_m4a(url)
+        
+        message = f"""Uploading \n
+                    "{title}"  
+                """
+        with st.spinner(message):
+            save_to_drive(audio_file, title)
+        st.success(f"All done! Check your Drive folder. file:{audio_file}")
